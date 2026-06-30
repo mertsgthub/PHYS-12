@@ -16,19 +16,83 @@
 
   <body>
     <section class="blog">
-      <h1>Week 2: 2D/3D Design</h1>
+      <h1 style="font-family: 'Times New Roman', Times, serif;">Week 2: 2D/3D Design</h1>
       
-      <p>
-        You have three assignments: design a cardboard box, work through a Fusion 360 tutorial, and model some household objects or components from the lab. Include some pictures and downloads to your 3D models.
-      </p>
-      
-      <h2>Box Design</h2>
+      <h2 style="font-family: 'Times New Roman', Times, serif;">Box Design</h2>
+      <p>For the box design I went with a basic design but for its side I have written my name with gears, which was the hardest part.</p>
+      <div id="slideshow3" class="slideshow-container">
+        <div class="slides">
+          <img src="./Assets/boximage.png" alt="">
+        </div>
+        <div class="slides">
+          <img src="./Assets/box1.png" alt="">
+        </div>
+        <div class="slides">
+          <img src="./Assets/box2.png" alt="">
+        </div>
+        <a class="prev" onclick="plusSlides(-1, 'slideshow3')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow3')">&#10095;</a>
+      </div>
 
-      <p>This is how you create <a href="./Assets/example_part.stl" download>a link to download a file</a>.</p>
+      <p><strong>You can find the dxf of my box from this onshape link <a href="https://cad.onshape.com/documents/175cf1619bfa54b2370978a5/w/fff714965ceaa41a5a0326da/e/0d190448d0034008892aae50">link</a>.</strong></p>
 
-      <h2>Fusion 360 Tutorial</h2>
+      <h2 style="font-family: 'Times New Roman', Times, serif;">Fusion 360 Tutorial</h2>
+      <p>I modeled the following impeller from onshape by following this <a href="https://www.youtube.com/watch?v=W7y9O0EZRaM">tutorial</a>.</p>
+      <img src="./Assets/impeller.png" alt="">
+
+      <p><strong>You can download the stl from <a href="./Assets/tutorial impeller.stl" download>here</a>.</strong></p>
       
-      <h2>CAD Practice</h2>
+      <h2 style="font-family: 'Times New Roman', Times, serif;">CAD Practice</h2>
+      <p>For CAD practice I choose calipers and a plastic tip hammer and designed them on onshape and tried to use different functions that I haven't used before such as loft, creating new offset planes and revolve. I created the caliper in two seperate part studios and merged them in assembly and created the hammer in one part studio.</p>
+      <div id="slideshow1" class="slideshow-container">
+        <p>Design iamges of the caliper:</p>
+        <div class="slides">
+          <img src="./Assets/caliper_whole_1.png" alt="">
+          <p class="caption">Whole caliper in the assembly</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/caliper_whole_2.png" alt="">
+          <p class="caption">Whole caliper in the assembly</p>
+        </div>
+         <div class="slides">
+          <img src="./Assets/caliper_body.png" alt="">
+          <p class="caption">First half of the caliper in the part studio</p>
+        </div>
+         <div class="slides">
+          <img src="./Assets/caliper_head.png" alt="">
+          <p class="caption">Second half of the caliper in the part studio</p>
+        </div>
+         <div class="slides">
+          <img src="./Assets/caliper_original.png" alt="">
+          <p class="caption">Original caliper that I designed</p>
+        </div>
+        <a class="prev" onclick="plusSlides(-1, 'slideshow1')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow1')">&#10095;</a>
+      </div>
+      <div id="slideshow2" class="slideshow-container">
+        <p>Design iamges of the hammer:</p>
+        <div class="slides">
+          <img src="./Assets/hammer_up.png" alt="">
+          <p class="caption">Whole hammer in the assembly</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/hammer_down.png" alt="">
+          <p class="caption">Whole hammer in the assembly</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/hammer_original.png" alt="">
+          <p class="caption">Original hammer that I designed</p>
+        </div>
+
+
+        <a class="prev" onclick="plusSlides(-1, 'slideshow2')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow2')">&#10095;</a>
+      </div>
+
+      <p><strong>You can download the stls from here:
+        <a href="./Assets/caliper.stl" download>caliper,</a>
+        <a href="./Assets/hammer.stl" download>hammer</a>
+      </strong></p>
     </section>
   </body>
 

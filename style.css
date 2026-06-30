@@ -99,6 +99,7 @@ th, td {
 .caption {
   font-size: clamp(1rem, 1vw, 100rem);
   align-self: center;
+  text-align: center;
 }
 
 /* Media */
