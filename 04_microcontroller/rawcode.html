@@ -1,5 +1,19 @@
 <link rel="stylesheet" href="../style.css">
 
-<pre><code>// Put your code here
-Serial.print("Hello World!");
+<pre><code>
+const int POT = A0;
+const int PWM = D8;
+const int DIR = D7;
+
+void setup() {
+  pinMode(DIR, OUTPUT);
+  digitalWrite(DIR, HIGH);
+}
+
+void loop() {
+  int pot   = analogRead(POT);
+  int speed = map(pot, 0, 4095, 0, 255);
+  analogWrite(PWM, speed);
+  delay(10);
+}
 </code></pre>

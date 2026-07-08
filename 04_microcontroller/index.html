@@ -8,28 +8,173 @@
     <link rel="stylesheet" href="../style.css">
   </head>
 
+  <style>
+    .slideshow-container {
+      max-width: 800px;
+      position: relative;
+      margin: 20px auto;
+      background-color: #000;
+      color: #fff;
+      padding-bottom: 40px; /* Space for absolute arrows */
+    }
+    .slideshow-container p {
+      color: #fff;
+      padding: 10px;
+    }
+    /* Hide all slides by default */
+    .slides {
+      display: none;
+    }
+    /* Responsive image/video layout */
+    .slides img, .slides video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    /* Arrow Styles */
+    .prev, .next {
+      cursor: pointer;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 16px;
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+      background-color: rgba(0,0,0,0.6);
+      user-select: none;
+      z-index: 10;
+      text-decoration: none;
+    }
+    .next { right: 0; }
+    .prev { left: 0; }
+    .prev:hover, .next:hover { background-color: rgba(0,0,0,0.9); }
+  </style>
+</head>
+<body>
+
   <nav>
     <a id="home" href="../index.html">Home</a>
     <a href="../index.html#final-project">Work</a>
     <a href="../about.html">About</a>
   </nav>
 
-  <body>
-    <section class="blog">
-      <h1>Week 4: Programming</h1>
-
-      <p>
-        Program your Xiao to do something. Explain how your code works and link any tutorials or resources you used. Record a video, include code snippets, and draw a schematic of your circuit.
-      </p>
+  <section class="blog">
+    <h1>Week 4: Programming</h1>
+    <p>For this weeks electronic project I wanted to work on my previous kinteic sculpture and this time I wanted to adjust its wing flapping speed.</p>
+    <p>Firstly, I remade the entire system. I first cut a larger box and made the cam as a of centered circle to since the nautilus shell-like cam was not working to to friction. So I made it a circle and also wrapped the cam with vinyl to reduce friction. Also I added cylinders at the bottom of the sticks so they won't get stuck to the cam and try to rotate instead of an up and down motion. I used a thicker wood to as a shaft and used cardboard bearings for extra stability. Also I reguled the connections of the sticks, so it will be a stronger structure. Moreover, I added a second cardboard plane so it would hold the sticks under the wings at 2 points for better stability. Even though it works with hand, it does not works with the esp32 because the motor wasn't powerful enough and it couldn't rotated the total weight. In the future I might try using it with a powerful motor.</p>
     
-      <p>
-        Add a <a href="./rawcode.html" target="_blank">link to your raw code</a>.
-      </p>
-    </section>
-  </body>
+    <!-- SLIDESHOW 1: IMAGES ONLY -->
+    <div id="slideshow1" class="slideshow-container">
+      <p>Design images of the project:</p>
+      <div class="slides">
+        <img src="./Assets/front.jpeg" alt="Front view">
+      </div>
+      <div class="slides">
+        <img src="./Assets/side.jpeg" alt="Side view">
+      </div>
+      <!-- Fixed: Arrows are now safely outside the .slides class -->
+      <a class="prev" onclick="plusSlides(-1, 'slideshow1')">❮</a>
+      <a class="next" onclick="plusSlides(1, 'slideshow1')">❯</a>
+    </div>
+
+    <p>As the circuit, I used a dc motor that can be adjusted with a potentiometer, which works with a motor but under the load of my sculpture it can't turn as I intended. You can find the raw code, video and a schematic of the circuit below.</p>
+    
+    <!-- SLIDESHOW 2: MIXED MEDIA (VIDEO & IMAGE) -->
+    <div id="slideshow2" class="slideshow-container">
+      <p>Videos and photos of the electronics:</p>
+      <div class="slides">
+        <video controls muted playsinline>
+          <source src="./Assets/çalış.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="slides">
+        <video controls muted playsinline>
+          <source src="./Assets/çalışma.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="slides">
+        <img src="./Assets/şema.jpeg" alt="Circuit Schematic">
+      </div>
+      <!-- Fixed: Arrows are safely outside the .slides class -->
+      <a class="prev" onclick="plusSlides(-1, 'slideshow2')">❮</a>
+      <a class="next" onclick="plusSlides(1, 'slideshow2')">❯</a>
+    </div>
+
+    <p>Add a <a href="./rawcode.html" target="_blank">link to your raw code</a>.</p>
+  </section>
 
   <footer>See config.js</footer>
-
+  
   <script src="../config.js"></script>
   <script src="../slideshow.js"></script>
+
+  <!-- Script Fallback: This handles the execution flawlessly directly on the page -->
+  <script>
+    let slideshows = {};
+
+    // Initialize both slideshow containers immediately on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initSlideshow('slideshow1');
+      initSlideshow('slideshow2');
+    });
+
+    function initSlideshow(containerId) {
+      slideshows[containerId] = {
+        slideIndex: 1,
+        timeoutId: null
+      };
+      showSlides(1, containerId);
+    }
+
+    function plusSlides(n, containerId) {
+      if (!slideshows[containerId]) initSlideshow(containerId);
+      showSlides(slideshows[containerId].slideIndex += n, containerId);
+    }
+
+    function showSlides(n, containerId) {
+      let container = document.getElementById(containerId);
+      if (!container) return;
+
+      let slides = container.getElementsByClassName("slides");
+      let state = slideshows[containerId];
+
+      clearTimeout(state.timeoutId);
+
+      if (n > slides.length) { state.slideIndex = 1; }
+      if (n < 1) { state.slideIndex = slides.length; }
+
+      // Hide all slides and pause videos
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].style.display = "none";
+        let video = slides[i].querySelector('video');
+        if (video) {
+          video.pause();
+          video.currentTime = 0;
+        }
+      }
+
+      // Display active slide
+      let activeSlide = slides[state.slideIndex - 1];
+      if(activeSlide) {
+        activeSlide.style.display = "block";
+
+        let video = activeSlide.querySelector('video');
+        if (video) {
+          video.play().catch(e => console.log("Autoplay context note:", e));
+          video.onended = function() {
+            plusSlides(1, containerId);
+          };
+        } else {
+          // Photo auto-rotates after 5 seconds
+          state.timeoutId = setTimeout(function() {
+            plusSlides(1, containerId);
+          }, 5000);
+        }
+      }
+    }
+  </script>
+    <p>I used Gemini for the HTML to put both videos and photos to the same slide show</p>
+
+</body>
 </html>
