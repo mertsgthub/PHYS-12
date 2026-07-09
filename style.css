@@ -307,3 +307,12 @@ footer a {
   .about { grid-template-columns: 1fr; } 
   .about img { padding-right: 0%;}
 }
+
+
+
+.crop-bottom {
+  width: 100%;          /* Set desired width */
+  height: 800px;        /* Set desired height (shorter than the original) */
+  object-fit: cover;    /* Keeps aspect ratio without distortion */
+  object-position: top; /* Anchors image to the top, cropping the bottom */
+}
