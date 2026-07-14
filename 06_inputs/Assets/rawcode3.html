@@ -1,0 +1,35 @@
+<link rel="stylesheet" href="../style.css">
+
+<pre><code>
+int trigPin = D3;
+int echoPin = D4;
+int buttonPin = D5;
+int buttonState = 0;
+void setup() {
+  Serial.begin(9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP); 
+
+}
+
+void loop() {
+  buttonState = digitalRead(buttonPin); 
+  if(buttonState==LOW){
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+
+    digitalWrite(trigPin, HIGH);
+    delay(10);
+    digitalWrite(trigPin, LOW);
+
+    long duration = pulseIn(echoPin, HIGH);
+
+    float distance = duration * 0.343 / 2;
+    Serial.println(distance);
+    // I am using delay because otherwise it will read multiple values in one press. So I used delay in order to take values more easily and calibrate it
+    delay(1000);
+  }
+}
+
+</code></pre>

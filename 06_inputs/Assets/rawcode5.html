@@ -1,0 +1,30 @@
+<link rel="stylesheet" href="../style.css">
+
+<pre><code>
+int trigPin = D3;
+int echoPin = D4;
+int buzzerPin = D5;
+int freq = 4000;    // 2 kHz is very audible for piezo elements
+int resolution = 8;
+void setup() {
+  Serial.begin(9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  ledcAttach(buzzerPin, freq, resolution);
+}
+
+void loop() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  long duration = pulseIn(echoPin, HIGH);
+  float distance = duration * 0.0343 / 2;
+  int constrainedDistance = constrain(distance, 5, 100);
+  int volume = map(constrainedDistance, 5, 100, 127, 0);
+  ledcWrite(buzzerPin, volume);
+}
+</code></pre>

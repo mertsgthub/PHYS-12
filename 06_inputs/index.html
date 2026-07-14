@@ -16,16 +16,112 @@
 
   <body>
     <section class="blog">
-      <h1>Week 6: Inputs</h1>
+      <h1 style="font-family: 'Times New Roman', Times, serif;">Week 6: Inputs</h1>
 
       <p>
         You have two assignments: create and calibrate a capacitive sensor and then use and calibrate another sensor.
       </p>
       
-      <h2>Capacitive Sensor</h2>
+      <h2 style="font-family: 'Times New Roman', Times, serif;">Capacitive Sensor</h2>
+      <p>In the class we made a sensor that calculates the water level by changing the permittivity. As we add water, which has higher permittivity than air increased our capacitence thus increasing the value we read in the serial monitor. Then, we took couple of readings for each level and created a table in order to create a graph. Lastly, we drew a best-fit curve to see the relation, and the result was as expected, a logarithmic curve like line appeared.</p>
+
+      <div id="slideshow1" class="slideshow-container">
+        <div class="slides">
+          <img src="./Assets/düzenek1.jpeg" alt="">
+          <p class="caption">The system we created for the sensor</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/tablo1.png" alt="">
+          <p class="caption">The raw and processed data tables for the graph</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/graph1.png" alt="">
+          <p class="caption">The plotting and the best-fit curve</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/şema1.jpeg" alt="">
+          <p class="caption">Schematic of the circuit</p>
+        </div>
+
+
+        <a class="prev" onclick="plusSlides(-1, 'slideshow1')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow1')">&#10095;</a>
+      </div>
+      <p>You can click <a href="./Assets/rawcode2.html" target="_blank">here</a> to see the rawcode.</p>
+
       
-      <h2>Another Sensor</h2>
+      <h2 style="font-family: 'Times New Roman', Times, serif;">Ultrasonic Sensor</h2>
+      <p>For the second sensor I selected an ultrasonic sensor to measure the distance and connected a buzzer. It buzzes louder as you get closer in a range of 0 &lt;d <100cm. To calibrate it I changed the circuit and added a button instead of a buzzer so I can take discrete values when I press the button. Then, I created a system by laser cutter with known measurments to compare the real distance with the measured one. Also, I wrote two codes one helps to find the relation between time and distance and the other directly measures the difference so I can compare the real and measured distances. </p>
       
+       <div id="slideshow2" class="slideshow-container">
+        <div class="slides">
+          <img src="./Assets/ultra.jpeg" alt="">
+          <p class="caption">The system I created for the buzzer</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/button.jpeg" alt="">
+          <p class="caption">The system I created for the button</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/düzenek.jpeg" alt="">
+          <p class="caption">The system I created to get the measurements at known distances</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/tablo2.png" alt="">
+          <p class="caption">The processed data table for the graph that compares the measured and real distance</p>
+        </div>
+         <div class="slides">
+          <img src="./Assets/graph2.png" alt="">
+          <p class="caption">The plotting of the two distances</p>
+        </div>
+         <div class="slides">
+          <img src="./Assets/tablo3.png" alt="">
+          <p class="caption">The processed data table for the graph that compares the real distance and time</p>
+        </div>
+         <div class="slides">
+          <img src="./Assets/graph3.png" alt="">
+          <p class="caption">The plotting of the measured distance vs. time graph</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/şema2.jpeg" alt="">
+          <p class="caption">Schematic of the circuit with buzzer</p>
+        </div>
+
+        <a class="prev" onclick="plusSlides(-1, 'slideshow2')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow2')">&#10095;</a>
+      </div>
+
+      <p>The measured distance and the real distance turned out to be really close, so we can say that the sensor is overall precise. Also, when we plotted the time vs real distance graph we acquired a linear relationship, which we wanted. Since the formula of distance is d = v * t, we were expecting a linear relationship, where v is constant and its the speed of sound.</p>
+
+      <video controls>
+        <source src="./Assets/buzzer.mp4" type="video/mp4">
+      </video>
+      <p class="caption">Video of the system in action.</p>
+
+      <p>The codes for the <a href="./Assets/rawcode3.html" target="_blank">distance measuring</a>.</p>
+      <p>The codes for the <a href="./Assets/rawcode4.html" target="_blank">time measuring</a>.</p>
+      <p>The codes for the <a href="./Assets/rawcode5.html" target="_blank">buzzer system</a>.</p>
+
+<h2 style="font-family: 'Times New Roman', Times, serif;">CNC Planning</h2>
+<p> For the CNC assignment I created 2 iterations of it. I am CNCing a wooden block to acquire a storge compartment for my final project. The first one just requires one step and just carves the inside. However, the second one also shapes the bottom as well, so I need to take it out turn it around and CNC it for the second time, which might be risky. I think that the safest way will be to 3D print it. </p>
+ <div id="slideshow3" class="slideshow-container">
+        <div class="slides">
+          <img src="./Assets/1 step.png" alt="">
+          <p class="caption">1 step cnc</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/2 step.png" alt="">
+          <p class="caption">2 step cnc</p>
+        </div>
+
+
+        <a class="prev" onclick="plusSlides(-1, 'slideshow3')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow3')">&#10095;</a>
+      </div>
+<p>Download the 1 step CNC from <a href="./Assets/cnc1.stl" download>here</a>.</p>
+<p>Download the 2 step CNC from <a href="./Assets/cnc2.stl" download>here</a>.</p>
+
+
     </section>
   </body>
 
