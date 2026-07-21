@@ -19,12 +19,86 @@
       <h1>Week 7: Outputs</h1>
       
       <p>
-        Document your minimum viable project either here or in the <a href="../13_finalproject/index.html">Final Project tab</a>.
+        For my MVP I did a prototype with 2 input and 4 output devices. Also, I used ESP-now to wirelessly connect 2 esp32's. I used a wireless control because this seed dropper is intended to be used in drones or rc planes.
       </p>
 
-      <p>
-        Create a microcontroller program that integrates an input and output device, using the C++ class structure and avoiding the <code>delay()</code> function. Use the oscilliscope to measure the signals on one of the pins of your output device.
-      </p>
+      <p>Firstly, I designed the parts as bpth 2D and 3D. I cut the flat parts from laser cutter and printed the storage unit from 3D printer.</p>
+      <div id="slideshow1" class="slideshow-container">
+        <div class="slides">
+          <img src="./Assets/hazne.png" alt="">
+          <p class="caption">The 3D model of the storage that I printed</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/döndürme.png" alt="">
+          <p class="caption">The rotating part that is connected to the steppr motor.</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/hold.png" alt="">
+          <p class="caption">The part that attaches the mottor to the storage</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/sıkışma.png" alt="">
+          <p class="caption">The design of the part that prevents jamming inside.</p>
+        </div>
+        <a class="prev" onclick="plusSlides(-1, 'slideshow3')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow3')">&#10095;</a>
+      </div>
+
+         <p><strong>You can find the designs from this onshape <a href="https://cad.onshape.com/documents/0b794d47d7583f6fb8603c45/w/44ac98e49b9997c9ba984ab1/e/f584fe348ea878f4fbca6eec?renderMode=0&uiState=6a5fbf2b1555b28d8e3dc90a">link</a>.</strong></p>
+
+         <p><strong>This is the files for <a href="./Assets/body.stl" download>stl</a> and <a href="./Assets/mert- body part mk4.bgcode" download>gcode</a> of the storage. </strong></p>
+
+         <p>Then I searched for a system to connect the esp32 to a circuit wirelessly and learned that there is a thing called ESP-now, which enabled to control multiple ESP's wirelessly. I grabbed the materials and start making the ciruit. Then I developed the code by the help of Claude.</p>
+
+      <div id="slideshow2" class="slideshow-container">
+        <p>Images of the circuits</p>
+        <div class="slides">
+          <img src="./Assets/sender.jpeg" alt="">
+          <p class="caption">The circuit of the sender ESP32</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/receiver.jpeg" alt="">
+          <p class="caption">The circuit of the receiver ESP32</p>
+        </div>
+
+        <a class="prev" onclick="plusSlides(-1, 'slideshow2')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow2')">&#10095;</a>
+      </div>
+
+      <p>The codes for the <a href="./Assets/rawcode_sender.html" target="_blank">sender</a>.</p>
+      <p>The codes for the <a href="./Assets/rawcode_receiver.html" target="_blank">receiver</a>.</p>
+
+      <h3>Oscilliscope</h3>
+      <p>I measured the stepper motor direction and colected some data.</p>
+       <div id="slideshow3" class="slideshow-container">
+        <div class="slides">
+          <img src="./Assets/volt.jpeg" alt="">
+          <p class="caption">The finding that the volatge is between 0 and 3.3 volts as it should be.</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/speed2.jpeg" alt="">
+          <p class="caption">The interval between 2 spikes measured in low speed. The distance is more in slower speeds.</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/speed1.jpeg" alt="">
+          <p class="caption">The interval between 2 spikes measured in high speed. The distance is less in higher speeds.</p>
+        </div>
+
+        <a class="prev" onclick="plusSlides(-1, 'slideshow3')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow3')">&#10095;</a>
+      </div>
+
+     <video controls muted playsinline>
+          <source src="./Assets/osi.mp4" type="video/mp4">
+      </video>
+
+      <h3>The final result</h3>
+      <p>I am really happy with the result. It can dispense with little to no problem. For my final project I am going to attach the servo to the body and a lid to the servo. It lights blue led when it is connected. The servo rotates 180 and stays there when button is pressed. When the imaginery lid is open it lights green led. And you can control the stepper motor by potentiometer. </p>
+       <video controls muted playsinline>
+          <source src="./Assets/deneme.mp4" type="video/mp4">
+      </video>
+
+
     </section>
   </body>
 
