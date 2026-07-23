@@ -1,0 +1,331 @@
+<link rel="stylesheet" href="../style.css">
+<pre><code>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include <PubSubClient.h>
+
+
+#define SOLO_TEST 0     
+
+#define DEVICE_ID "A"  
+#define MY_NAME   "Mert"
+
+#define PAIR_ID   "a48b38b575EQABgNGB4y"   
+
+#define GREEN_MINUTES 1          
+
+const char *WIFI_SSID = "MAKERSPACE";
+const char *WIFI_PASS = "12345678";
+
+
+const int PIN_BUTTON = 3;   
+const int PIN_RED    = 4;  
+const int PIN_GREEN  = 5;   
+
+
+
+const char *MQTT_HOST = "broker.hivemq.com";
+const uint16_t MQTT_PORT = 1883;
+
+const unsigned long GREEN_HOLD_MS      = (unsigned long)GREEN_MINUTES * 60UL * 1000UL;
+const unsigned long BLINK_MS           = 700;
+const unsigned long DEBOUNCE_MS        = 30;
+const unsigned long RECONNECT_MS       = 3000;
+const unsigned long NOTIFY_COOLDOWN_MS = 30000;
+
+WiFiClient net;
+PubSubClient mqtt(net);
+
+char topicMine[80];
+char topicTheirs[80];
+char ntfyMine[80];
+char ntfyTheirs[80];
+char clientId[80];
+
+bool iPressed    = false;      
+bool theyPressed = false;      
+unsigned long greenUntil = 0; 
+
+bool cookiePending     = false;  
+bool heardFromThemEver = false;
+bool ignoreOwnEcho     = false;
+
+int  lastRawRead = HIGH;
+bool buttonDown  = false;
+unsigned long lastEdgeMs   = 0;
+unsigned long lastTryMs    = 0;
+unsigned long lastNotifyMs = 0;
+
+
+bool greenRunning() {
+  return greenUntil != 0 && (long)(greenUntil - millis()) > 0;
+}
+
+void ledSelfTest() {
+  Serial.println("LED self-test: red, then green, then both...");
+  digitalWrite(PIN_RED, HIGH);   delay(500);
+  digitalWrite(PIN_RED, LOW);
+  digitalWrite(PIN_GREEN, HIGH); delay(500);
+  digitalWrite(PIN_GREEN, LOW);
+  digitalWrite(PIN_RED, HIGH);
+  digitalWrite(PIN_GREEN, HIGH); delay(500);
+  digitalWrite(PIN_RED, LOW);
+  digitalWrite(PIN_GREEN, LOW);
+  Serial.println("...done. If an LED stayed dark it is backwards or on the wrong pin.");
+}
+
+void updateLeds() {
+  if (greenRunning()) {
+    digitalWrite(PIN_GREEN, HIGH);
+    digitalWrite(PIN_RED, LOW);
+    return;
+  }
+
+  digitalWrite(PIN_GREEN, LOW);
+
+  if (theyPressed && !iPressed) {
+    digitalWrite(PIN_RED, HIGH);                    
+  } else if (iPressed && !theyPressed) {
+    bool on = ((millis() / BLINK_MS) % 2) == 0;     
+    digitalWrite(PIN_RED, on ? HIGH : LOW);
+  } else {
+    digitalWrite(PIN_RED, LOW);
+  }
+}
+
+
+void maybeStartGreen() {
+  if (iPressed && theyPressed && greenUntil == 0) {
+    greenUntil = millis() + GREEN_HOLD_MS;
+    cookiePending = true;
+    Serial.printf(">> BOTH PRESSED -- green for %d minutes\n", GREEN_MINUTES);
+  }
+}
+
+// force = true bypasses the cooldown (the cookie message lands seconds after
+// the press message and would otherwise be swallowed by it)
+void notifyThem(const char *body, bool force) {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  if (!force && lastNotifyMs != 0 && millis() - lastNotifyMs < NOTIFY_COOLDOWN_MS) {
+    Serial.println("notify: skipped (cooldown)");
+    return;
+  }
+
+  WiFiClientSecure secure;
+  secure.setInsecure();
+
+  char url[120];
+  snprintf(url, sizeof(url), "https://ntfy.sh/%s", ntfyTheirs);
+
+  HTTPClient http;
+  if (!http.begin(secure, url)) {
+    Serial.println("notify: begin() failed");
+    return;
+  }
+ if (!force) http.addHeader("Title", "Button pressed");
+ if (force) http.addHeader("Title", "Its Cookie Time");
+  http.addHeader("Priority", "high");
+  if (!force) http.addHeader("Tags", "bell");
+  if (force) http.addHeader("Tags", "cookie");
+
+  int code = http.POST((uint8_t *)body, strlen(body));
+  Serial.printf("notify: http %d  \"%s\" -> %s\n", code, body, ntfyTheirs);
+  http.end();
+
+  if (code > 0) lastNotifyMs = millis();
+}
+
+void publishMine() {
+  mqtt.publish(topicMine, iPressed ? "1" : "0", true);
+  Serial.printf("-> sent %s on %s\n", iPressed ? "1" : "0", topicMine);
+}
+
+void onMessage(char *topic, byte *payload, unsigned int len) {
+  if (len < 1) return;
+  bool val = (payload[0] == '1');
+
+  // Traffic on OUR OWN topic that we didn't send means a second board is
+  // publishing under our identity: both boards share a DEVICE_ID.
+  if (strcmp(topic, topicMine) == 0) {
+    if (ignoreOwnEcho) { ignoreOwnEcho = false; return; }
+    if (val != iPressed) {
+      Serial.println();
+      Serial.println("*********************************************************");
+      Serial.println("** Another board is publishing as this device.          **");
+      Serial.println("** Both boards have the same DEVICE_ID.                 **");
+      Serial.println("** Set one of them to \"B\" and re-upload.                **");
+      Serial.println("*********************************************************");
+      Serial.println();
+    }
+    return;
+  }
+
+  if (strcmp(topic, topicTheirs) != 0) return;
+
+  if (!heardFromThemEver) {
+    heardFromThemEver = true;
+    Serial.println(">> friend's board is ONLINE");
+  }
+
+  theyPressed = val;
+  Serial.printf("<- they are now %s\n", val ? "WAITING (pressed)" : "idle");
+  maybeStartGreen();
+  updateLeds();
+}
+
+void connectWifi() {
+  Serial.printf("WiFi: connecting to %s", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(400);
+    Serial.print(".");
+  }
+  Serial.printf(" ok, ip %s\n", WiFi.localIP().toString().c_str());
+}
+
+bool connectMqtt() {
+  Serial.print("MQTT: connecting... ");
+  bool ok = mqtt.connect(clientId, topicMine, 0, true, "0");
+  if (!ok) {
+    Serial.printf("failed, rc=%d\n", mqtt.state());
+    return false;
+  }
+  Serial.println("connected");
+
+  ignoreOwnEcho = true;         
+  mqtt.subscribe(topicTheirs);
+  mqtt.subscribe(topicMine);    
+  publishMine();
+  return true;
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(400);
+
+  pinMode(PIN_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_RED, OUTPUT);
+  pinMode(PIN_GREEN, OUTPUT);
+  digitalWrite(PIN_RED, LOW);
+  digitalWrite(PIN_GREEN, LOW);
+
+  Serial.println();
+  Serial.println("========================================");
+  Serial.printf("pins: button=GPIO%d  red=GPIO%d  green=GPIO%d\n",
+                PIN_BUTTON, PIN_RED, PIN_GREEN);
+
+  ledSelfTest();
+
+  if (SOLO_TEST) {
+    Serial.println();
+    Serial.println("SOLO_TEST is ON -- no wifi, no mqtt, no notifications.");
+    Serial.println("1st press: RED latches on. 2nd press: GREEN for the full time.");
+    Serial.println("When that works, set SOLO_TEST to 0 and re-upload.");
+    Serial.println("========================================");
+    return;
+  }
+
+  const char *me      = DEVICE_ID;
+  const char *other   = (DEVICE_ID[0] == 'A') ? "B" : "A";
+  const char *meLo    = (DEVICE_ID[0] == 'A') ? "a" : "b";
+  const char *otherLo = (DEVICE_ID[0] == 'A') ? "b" : "a";
+
+  snprintf(topicMine,   sizeof(topicMine),   "%s/%s", PAIR_ID, me);
+  snprintf(topicTheirs, sizeof(topicTheirs), "%s/%s", PAIR_ID, other);
+  snprintf(ntfyMine,    sizeof(ntfyMine),    "%s-%s", PAIR_ID, meLo);
+  snprintf(ntfyTheirs,  sizeof(ntfyTheirs),  "%s-%s", PAIR_ID, otherLo);
+
+  Serial.printf("I am device %s\n", me);
+  Serial.println("----------------------------------------");
+  Serial.printf("SUBSCRIBE YOUR PHONE TO:  %s\n", ntfyMine);
+  Serial.printf("this board POSTS TO:      %s\n", ntfyTheirs);
+  Serial.println("----------------------------------------");
+  Serial.println("Your friend's two lines must be the reverse of these.");
+  Serial.println("If both boards print the same pair, your DEVICE_IDs are identical.");
+  Serial.println("========================================");
+
+  connectWifi();
+
+  uint8_t mac[6];
+  WiFi.macAddress(mac);
+  snprintf(clientId, sizeof(clientId), "%s-%s-%02X%02X", PAIR_ID, me, mac[4], mac[5]);
+
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
+  mqtt.setCallback(onMessage);
+  connectMqtt();
+}
+
+void loop() {
+
+  int raw = digitalRead(PIN_BUTTON);
+  if (raw != lastRawRead) {
+    lastRawRead = raw;
+    lastEdgeMs = millis();
+  }
+  bool settled = (millis() - lastEdgeMs > DEBOUNCE_MS);
+  bool downNow = (raw == LOW);
+
+
+  if (greenUntil != 0 && !greenRunning()) {
+    greenUntil = 0;
+    iPressed = false;
+    theyPressed = false;
+    Serial.println(">> green finished, back to idle");
+    if (!SOLO_TEST && mqtt.connected()) publishMine();
+  }
+
+
+  if (SOLO_TEST) {
+    if (settled && downNow != buttonDown) {
+      buttonDown = downNow;
+      if (downNow) {
+        if (greenRunning())  Serial.println("(green running, press ignored)");
+        else if (!iPressed) { iPressed = true;    Serial.println(">> RED ON. press again for green."); }
+        else                { theyPressed = true; maybeStartGreen(); }
+      }
+    }
+    cookiePending = false;
+    updateLeds();
+    return;
+  }
+
+ 
+  if (WiFi.status() != WL_CONNECTED) connectWifi();
+
+  if (!mqtt.connected()) {
+    if (millis() - lastTryMs > RECONNECT_MS) {
+      lastTryMs = millis();
+      connectMqtt();
+    }
+  } else {
+    mqtt.loop();
+  }
+
+  if (cookiePending) {
+    cookiePending = false;
+    notifyThem("", true);
+  }
+
+  if (settled && downNow != buttonDown) {
+    buttonDown = downNow;
+
+    if (downNow) {
+      if (greenRunning()) {
+        Serial.println("(green is running, press ignored)");
+      } else {
+        iPressed = !iPressed;            // toggle, so a second press cancels
+        Serial.println(iPressed ? ">> you pressed" : ">> you cancelled");
+        if (mqtt.connected()) publishMine();
+        if (iPressed) notifyThem(MY_NAME " wants a cookie ", false);
+        maybeStartGreen();
+      }
+    }
+  }
+
+  updateLeds();
+}
+
+</code></pre>
