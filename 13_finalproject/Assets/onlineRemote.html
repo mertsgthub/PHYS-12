@@ -1,0 +1,127 @@
+<link rel="stylesheet" href="../style.css">
+
+<pre><code>import serial, struct, threading, time
+from flask import Flask, Response, request, render_template_string
+
+PORT = "/dev/cu.usbmodem101"   # &lt;-- change to your sender's port
+BAUD = 921600
+MAGIC = b'\xA5\x5A\xA5\x5A'
+
+app = Flask(__name__)
+ser = serial.Serial(PORT, BAUD, timeout=0.1)
+serial_lock = threading.Lock()
+
+latest_frame = None
+frame_lock = threading.Lock()
+
+def reader_thread():
+    global latest_frame
+    buf = bytearray()
+    while True:
+        with serial_lock:
+            data = ser.read(4096)
+        if data:
+            buf += data
+        while True:
+            i = buf.find(MAGIC)
+            if i &lt; 0:
+                if len(buf) &gt; 200000: del buf[:-4]
+                break
+            if len(buf) &lt; i + 8: break
+            (n,) = struct.unpack('&lt;I', bytes(buf[i+4:i+8]))
+            if n == 0 or n &gt; 200000:
+                del buf[:i+4]; continue
+            if len(buf) &lt; i + 8 + n: break
+            jpg = bytes(buf[i+8:i+8+n])
+            del buf[:i+8+n]
+            with frame_lock:
+                latest_frame = jpg
+        time.sleep(0.01)
+
+threading.Thread(target=reader_thread, daemon=True).start()
+
+def gen_mjpeg():
+    while True:
+        with frame_lock:
+            frame = latest_frame
+        if frame is not None:
+            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        time.sleep(0.05)
+
+@app.route('/stream')
+def stream():
+    return Response(gen_mjpeg(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/speed', methods=['POST'])
+def speed():
+    pct = int(request.json.get('value', 0))
+    pot = max(0, min(4095, int(pct * 4095 / 100)))
+    with serial_lock:
+        ser.write(f"P{pot}\n".encode())
+    return {'ok': True}
+
+@app.route('/servo', methods=['POST'])
+def servo():
+    state = int(request.json.get('state', 0))
+    with serial_lock:
+        ser.write(f"V{state}\n".encode())
+    return {'ok': True}
+
+PAGE = """
+&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;Robot Remote&lt;/title&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+&lt;style&gt;
+  body { font-family: -apple-system, sans-serif; background:#111; color:#eee; text-align:center; padding:20px; }
+  img { max-width:100%; border-radius:12px; border:2px solid #333; }
+  .panel { margin-top:24px; }
+  input[type=range] { width:80%; }
+  button { font-size:18px; padding:14px 28px; margin-top:16px; border-radius:10px; border:none; background:#3a7; color:white; }
+  button.off { background:#555; }
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+  &lt;h2&gt;Live Feed&lt;/h2&gt;
+  &lt;img src="/stream"&gt;
+  &lt;div class="panel"&gt;
+    &lt;h3&gt;Stepper Speed&lt;/h3&gt;
+    &lt;input type="range" id="speedSlider" min="0" max="100" value="0"&gt;
+    &lt;div id="speedLabel"&gt;0%&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="panel"&gt;
+    &lt;h3&gt;Servo&lt;/h3&gt;
+    &lt;button id="servoBtn" class="off"&gt;Extend (180°)&lt;/button&gt;
+  &lt;/div&gt;
+&lt;script&gt;
+  const slider = document.getElementById('speedSlider');
+  const label  = document.getElementById('speedLabel');
+  function sendSpeed() {
+    fetch('/speed', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({value: slider.value})});
+  }
+
+  let webTimer = null;
+  slider.addEventListener('input', () =&gt; {
+    label.textContent = slider.value + '%';
+    sendSpeed();
+    clearTimeout(webTimer);
+    // keep the override alive briefly, then release it so the knob can take over
+    webTimer = setTimeout(() =&gt; { webTimer = null; }, 1500);
+  });
+  setInterval(() =&gt; { if (webTimer !== null) sendSpeed(); }, 200);
+
+  let servoOn = false;
+  const btn = document.getElementById('servoBtn');
+  btn.addEventListener('click', () =&gt; {
+    servoOn = !servoOn;
+    btn.textContent = servoOn ? 'Retract (0°)' : 'Extend (180°)';
+    btn.className = servoOn ? '' : 'off';
+    fetch('/servo', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({state: servoOn ? 1 : 0})});
+  });
+&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(PAGE)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5001, threaded=True)</code></pre>

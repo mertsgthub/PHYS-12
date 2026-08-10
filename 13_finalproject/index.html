@@ -16,12 +16,110 @@
 
   <body>
     <section class="blog">
-      <h1>Final Project</h1>
-      
+      <h1>Final Project: Seed Dropper</h1>
+      <p> You can access to my MVP documentation from <a href="https://mertsgthub.github.io/PHYS-12/07_outputs/index.html">Week 7: Outputs</a>.</strong></p>
+      <h2>Demo Viedo of My project:</h2>
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/km1SQYXkeWk?si=ZjxVc04wvkrbzX46" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <p><strong>If video does not work you can access it by this <a href="https://youtu.be/km1SQYXkeWk?si=wQLpmr76mSuay09x">link</a>.</strong></p>
+      <h2>My Motivation:</h2>
+      <p>This was a project that we tried to make in my aviation club as a drone project. We couldn't finished it, so I completely changed the design and did something much better and consistently working. This project's aim is to built a drone mounting that can dispense seed balls one by one to rural areas to green them.</p>
+      <h2>Part 1: CAD Design</h2>
+      <p><strong>You can find the designs from this onshape <a href="https://cad.onshape.com/documents/0b794d47d7583f6fb8603c45/w/44ac98e49b9997c9ba984ab1/e/f584fe348ea878f4fbca6eec?renderMode=0&uiState=6a5fbf2b1555b28d8e3dc90a">link</a>.</strong></p>
+
+      <div id="slideshow1" class="slideshow-container">
+        <div class="slides">
+          <img src="./Assets/gövde.jpeg" alt="">
+          <p class="caption">This is the main body of my project. You can download the Stl from <a href="./Assets/gövde.stl" download>here</a></p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/rc.jpeg" alt="">
+          <p class="caption">This is housing for my remote controller. You can download the Stl from <a href="./Assets/rc.stl" download>here</a></p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/elec.jpeg" alt="">
+          <p class="caption">This is the housing of the electronics. You can download the Stl from <a href="./Assets/circuit.stl" download>here</a></p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/1st.jpeg" alt="">
+          <p class="caption">The design of 1st attachment(wood)</p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/1st.jpeg" alt="">
+          <p class="caption">This is the part(grey part) that I designed on top of the 1st attachement to solve jamming. You can download the Stl from <a href="./Assets/jammer.stl" download>here</a></p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/2nd.jpeg" alt="">
+          <p class="caption">This is the 2nd attachment that can dispense different sizes of seed balls. You can download the Stl from <a href="./Assets/2nd.stl" download>here</a></p>
+        </div>
+        <div class="slides">
+          <img src="./Assets/bat.jpeg" alt="">
+          <p class="caption">This is the housing of batteries that I used to power the stepper motor. It has 3x3.7 volts batteries soldered together. You can download the Stl from <a href="./Assets/bat.stl" download>here</a></p>
+        </div>
+        <a class="prev" onclick="plusSlides(-1, 'slideshow3')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, 'slideshow3')">&#10095;</a>
+      </div>
+      <h2>Part 2: electronics</h2>
+      <div id="slideshow2" class="slideshow-container">
+      <p>Photos of the electronics:</p>
+      <div class="slides">
+        <img src="./Assets/ecc.jpeg" alt="">
+        <p class="caption">The protoboard I built for my remote controller. It has 2 leds, 1 potentiometer and 1 button.</p>
+      </div>
+      <div class="slides">
+        <img src="./Assets/ec.jpeg" alt="">
+        <p class="caption">The protoboard I built for my electronics on the body. It has 1 motor driver for the stepper motor, 1 servo and a capacitor.</p>
+      </div>
+       <div class="slides">
+        <img src="./Assets/scrc.jpeg" alt="">
+        <p class="caption">Schematic of the remote</p>
+      </div>
+      <div class="slides">
+        <img src="./Assets/sce.jpeg" alt="">
+         <p class="caption">Schematic of the body electronics</p>
+      </div>
+      <!-- Fixed: Arrows are safely outside the .slides class -->
+      <a class="prev" onclick="plusSlides(-1, 'slideshow2')">❮</a>
+      <a class="next" onclick="plusSlides(1, 'slideshow2')">❯</a>
+    </div>
+      <h2>Part 3: Coding</h2>
+      <p>There is 4 different codes for my project: 3 written in Arduino IDE for the sender esp, receiver esp and esp-cam and 1 written in vs code for the local web server as a virtual remote controller and for the live feed. I connected all 3 esps by esp-now so they can interact with each other from long ranges. The remote sends the information to the stepper and servo's esp, and esp-cam sends the photos to the remote's esp, which is connected to my laptop, so I can run the local web server. ı developed all codes by the help of Claude</p>
+      <p>The codes for the <a href="./Assets/sender.html" target="_blank">sender</a>.</p>
+      <p>The codes for the <a href="./Assets/receiver.html" target="_blank">receiver</a>.</p>
+      <p>The codes for the <a href="./Assets/cam.html" target="_blank">esp-cam</a>.</p>
+      <p>The codes for the <a href="./Assets/onlineremote.html" target="_blank">local web server</a>.</p>
       <p>
+        <h2>Bill of Materials</h2>
+        <table class="parts">
+  <thead>
+    <tr><th>Name</th><th>Quantity</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>ESP-32</td><td class="num">2</td></tr>
+    <tr><td>ESP-CAM</td><td class="num">1</td></tr>
+    <tr><td>Stepper Motor</td><td class="num">1</td></tr>
+    <tr><td>Servo Motor</td><td class="num">1</td></tr>
+    <tr><td>Led</td><td class="num">2</td></tr>
+    <tr><td>Potentiometer</td><td class="num">1</td></tr>
+    <tr><td>button</td><td class="num">1</td></tr>
+    <tr><td>A barrel jack connection and a cable set</td><td class="num">1</td></tr>
+    <tr><td>A4988 Motor driver</td><td class="num">1</td></tr>
+    <tr><td>PLA</td><td>Enough for all parts</td></tr>
+    <tr><td>Ply Wood</td><td>Enough for all parts</td></tr>
+    <tr><td>usb-c to usb-c cable</td><td class="num">2</td></tr>
+    <tr><td>usb-c to micro-usb cable</td><td class="num">1</td></tr>
+    <tr><td>Wire</td><td>1 meter</td></tr>
+    <tr><td>solder</td><td>30 cm</td></tr>
+    <tr><td>bolts(m2,m3,m4)</td><td>Enough for all parts</td></tr>
+    <tr><td>capacitor(100 &micro;F)</td><td class="num">1</td></tr>
+    <tr><td>Velcro</td><td>50 cm</td></tr>
+
+  </tbody>
+</table>
+        <h2>My Suggestions To Make It Better</h2>
+        <p>If I would be recreating this I would first change the battery structure it is now running on 2 powerbanks and a wall ouput or the battery case. I will definitely use a single battery with two outputs for the esp32 and the esp-cam and a rechargble lithium battery with 12 volt output for the stepper. I will also create a housing for the cables. I will make the top part of it rectangular and than slowly transitioning it to the circular base for extra storage. Also, I will experiment with various attttachments for different usages.</p>
         This is where you'll document your final project. Be sure to include a video demonstrating your project and a bill of materials. Good documentation should explain your entire build process such that someone reading your documentation could recreate your entire project from scratch. See the PS70 website for examples.
       </p>
-      
+      <h3>Special thanks to Mr. Melenbrink, Victor, Hannah, and Jonathan for thier help.</h3>
     </section>
   </body>
 

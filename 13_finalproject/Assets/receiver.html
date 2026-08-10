@@ -1,0 +1,78 @@
+<link rel="stylesheet" href="../style.css">
+
+<pre><code>
+
+
+
+#include &lt;WiFi.h&gt;
+#include &lt;esp_now.h&gt;
+#include &lt;AccelStepper.h&gt;
+#include &lt;esp_wifi.h&gt;
+#include &lt;ESP32Servo.h&gt;
+
+
+
+#define STEP_PIN     D0
+#define DIR_PIN      D1
+#define SERVO_PIN    D2          
+#define MAX_SPEED    600        
+#define WIFI_CHANNEL 1
+
+AccelStepper stepper(AccelStepper::DRIVER, STEP_PIN, DIR_PIN);
+Servo myServo;
+
+typedef struct {
+  int  potValue;
+  bool servoExtended;
+} Packet;
+
+Packet incoming;
+volatile bool newData = false;
+bool lastServoState = false;
+
+
+void onDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, int len) {
+  memcpy(&incoming, incomingData, sizeof(incoming));
+  newData = true;
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);                                
+  esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
+
+  if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init failed"); return; }
+  esp_now_register_recv_cb(onDataRecv);
+
+  stepper.setMaxSpeed(MAX_SPEED);
+  stepper.setSpeed(0);
+
+
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+  myServo.setPeriodHertz(50);
+  myServo.attach(SERVO_PIN, 500, 2400);
+  myServo.write(0);
+}
+
+void loop() {
+  if (newData) {
+    newData = false;
+
+    int spd = map(incoming.potValue, 200, 4095, 0, MAX_SPEED);
+    spd = constrain(spd, 0, MAX_SPEED);
+    stepper.setSpeed(spd);
+
+    if (incoming.servoExtended != lastServoState) {
+      lastServoState = incoming.servoExtended;
+      myServo.write(incoming.servoExtended ? 180 : 0);
+    }
+  }
+  stepper.runSpeed();
+}
+
+</code></pre>

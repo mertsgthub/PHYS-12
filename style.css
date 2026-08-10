@@ -104,6 +104,7 @@ th, td {
   text-align: center;
 }
 
+
 /* Media */
 
 iframe, video, img, .img-duo, .img-trip, .img-quad {
@@ -170,7 +171,10 @@ img:has(+ .caption) {
 .slides {
   display: none;
 }
-
+.slides {
+  display: none;
+  text-align: center;   /* centers the img and the text together */
+}
 .prev, .next {
   position: absolute;
   top: 50%;

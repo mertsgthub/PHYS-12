@@ -1,0 +1,194 @@
+<link rel="stylesheet" href="../style.css">
+
+<pre><code>
+
+#include &lt;WiFi.h&gt;
+#include &lt;esp_now.h&gt;
+#include &lt;esp_wifi.h&gt;
+
+#define WIFI_CHANNEL   1
+#define POT_PIN        A1
+#define LED_PIN        D2
+#define BUTTON_PIN     D3
+#define SERVO_LED_PIN  D4
+
+#define CHUNK_SIZE      240
+#define MAX_FRAME_BYTES 20000
+#define SEND_INTERVAL   50
+#define POT_MOVE_THRESHOLD 400     // knob must move this much to reclaim control
+
+uint8_t receiverMac[] = { 0x94, 0xA9, 0x90, 0x6A, 0xDA, 0xF0 };
+
+typedef struct {
+  int  potValue;
+  bool servoExtended;
+} Packet;
+
+Packet outgoing;
+esp_now_peer_info_t peerInfo;
+
+typedef struct __attribute__((packed)) {
+  uint8_t  magic;
+  uint16_t frameId;
+  uint16_t chunkIdx;
+  uint16_t chunkTotal;
+  uint16_t len;
+} ImgHdr;
+
+uint8_t  frameBuf[MAX_FRAME_BYTES];
+volatile uint32_t frameLen   = 0;
+volatile bool     frameReady = false;
+uint16_t curFrameId = 0xFFFF;
+uint16_t chunksGot = 0, chunksExpected = 0;
+bool     frameGood = false;
+const uint8_t MAGIC[4] = { 0xA5, 0x5A, 0xA5, 0x5A };
+
+int           lastReading  = HIGH;
+int           buttonState  = HIGH;
+unsigned long lastDebounce = 0;
+unsigned long lastSend     = 0;
+const unsigned long debounceMs = 50;
+
+int  remotePotValue = 0;
+bool remoteActive = false;
+unsigned long lastRemoteMs = 0;
+const unsigned long REMOTE_TIMEOUT_MS = 500;
+String cmdBuf = "";
+int lastPhysicalPot = -1;
+
+void onDataSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
+  digitalWrite(LED_PIN, status == ESP_NOW_SEND_SUCCESS ? HIGH : LOW);
+}
+
+void onDataRecv(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
+  if (len < (int)sizeof(ImgHdr) || data[0] != 0xA5) return;
+  if (frameReady) return;
+
+  ImgHdr h;
+  memcpy(&h, data, sizeof(h));
+  if (h.len > CHUNK_SIZE || len < (int)sizeof(h) + h.len) return;
+
+  if (h.frameId != curFrameId) {
+    curFrameId     = h.frameId;
+    chunksGot      = 0;
+    chunksExpected = h.chunkTotal;
+    frameLen       = 0;
+    frameGood      = true;
+  }
+
+  uint32_t off = (uint32_t)h.chunkIdx * CHUNK_SIZE;
+  if (off + h.len <= MAX_FRAME_BYTES) {
+    memcpy(frameBuf + off, data + sizeof(h), h.len);
+    chunksGot++;
+    if (off + h.len > frameLen) frameLen = off + h.len;
+  } else {
+    frameGood = false;
+  }
+
+  if (frameGood && chunksExpected > 0 && chunksGot >= chunksExpected) frameReady = true;
+}
+
+void handleSerialCommands() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n') {
+      cmdBuf.trim();
+      if (cmdBuf.length() > 0) {
+        char type = cmdBuf.charAt(0);
+        String val = cmdBuf.substring(1);
+        if (type == 'P') {
+          remotePotValue = constrain(val.toInt(), 0, 4095);
+          remoteActive = true;
+          lastRemoteMs = millis();
+        } else if (type == 'V') {
+          bool state = (val.toInt() != 0);
+          if (state != outgoing.servoExtended) {
+            outgoing.servoExtended = state;
+            digitalWrite(SERVO_LED_PIN, state ? LOW : HIGH);
+          }
+        }
+      }
+      cmdBuf = "";
+    } else if (c != '\r') {
+      cmdBuf += c;
+      if (cmdBuf.length() > 16) cmdBuf = "";
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(921600);
+  delay(500);
+
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(SERVO_LED_PIN, OUTPUT);
+  digitalWrite(SERVO_LED_PIN, HIGH);
+  analogReadResolution(12);
+
+  WiFi.mode(WIFI_STA);
+  delay(200);
+  WiFi.setSleep(false);
+  esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
+
+  uint8_t mac[6];
+  esp_wifi_get_mac(WIFI_IF_STA, mac);
+  Serial.println();
+  Serial.println("===== SENDER BOOT =====");
+  Serial.printf("SENDER MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
+                mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.printf("PUT THIS IN THE CAM SKETCH:\n");
+  Serial.printf("uint8_t senderMac[] = { 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X };\n",
+                mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.println("=======================");
+
+  if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init FAILED"); return; }
+  esp_now_register_send_cb(onDataSent);
+  esp_now_register_recv_cb(onDataRecv);
+
+  memcpy(peerInfo.peer_addr, receiverMac, 6);
+  peerInfo.channel = WIFI_CHANNEL;
+  peerInfo.encrypt = false;
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) Serial.println("add_peer FAILED");
+}
+
+void loop() {
+  int reading = digitalRead(BUTTON_PIN);
+  if (reading != lastReading) lastDebounce = millis();
+  if (millis() - lastDebounce > debounceMs) {
+    if (reading != buttonState) {
+      buttonState = reading;
+      if (buttonState == LOW) {
+        outgoing.servoExtended = !outgoing.servoExtended;
+        digitalWrite(SERVO_LED_PIN, outgoing.servoExtended ? LOW : HIGH);
+      }
+    }
+  }
+  lastReading = reading;
+
+  handleSerialCommands();
+  if (remoteActive && millis() - lastRemoteMs > REMOTE_TIMEOUT_MS) remoteActive = false;
+
+  if (millis() - lastSend >= SEND_INTERVAL) {
+    lastSend = millis();
+
+    int physical = analogRead(POT_PIN);
+    if (lastPhysicalPot < 0) lastPhysicalPot = physical;
+    if (abs(physical - lastPhysicalPot) > POT_MOVE_THRESHOLD) {
+      remoteActive    = false;        // knob was turned -> physical takes over
+      lastPhysicalPot = physical;
+    }
+
+    outgoing.potValue = remoteActive ? remotePotValue : physical;
+    esp_now_send(receiverMac, (uint8_t *)&outgoing, sizeof(outgoing));
+  }
+
+  if (frameReady) {
+    uint32_t n = frameLen;
+    Serial.write(MAGIC, 4);
+    Serial.write((uint8_t *)&n, 4);
+    Serial.write(frameBuf, n);
+    frameReady = false;
+  }
+}
+</code></pre>
